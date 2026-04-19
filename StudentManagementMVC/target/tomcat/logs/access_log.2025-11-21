@@ -1,0 +1,9 @@
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:23:58 +0700] "GET /StudentManagementMVC HTTP/1.1" 302 - http-bio-8080-exec-1 0
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:23:58 +0700] "GET /StudentManagementMVC/ HTTP/1.1" 200 346 http-bio-8080-exec-3 479
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:23:59 +0700] "GET /StudentManagementMVC/student?action=list HTTP/1.1" 200 8373 http-bio-8080-exec-4 645
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:02 +0700] "GET /StudentManagementMVC/student?action=search&keyword= HTTP/1.1" 200 8373 http-bio-8080-exec-5 22
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:05 +0700] "GET /StudentManagementMVC/student?action=search&keyword=. HTTP/1.1" 200 8676 http-bio-8080-exec-6 17
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:08 +0700] "GET /StudentManagementMVC/student?action=list HTTP/1.1" 200 8373 http-bio-8080-exec-7 16
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:20 +0700] "GET /StudentManagementMVC/student?action=search&keyword=h HTTP/1.1" 200 7036 http-bio-8080-exec-8 16
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:31 +0700] "GET /StudentManagementMVC/student?action=search&keyword=r HTTP/1.1" 200 6203 http-bio-8080-exec-9 19
+0:0:0:0:0:0:0:1 - - [21/Nov/2025:23:24:33 +0700] "GET /StudentManagementMVC/student?action=list HTTP/1.1" 200 8373 http-bio-8080-exec-10 14
