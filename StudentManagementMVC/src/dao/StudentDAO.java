@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,49 +13,37 @@ import model.Student;
 
 public class StudentDAO {
 
-    // Database configuration constants
     private static final String DB_URL = "jdbc:mysql://localhost:3306/student_management";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "1234"; // TODO: Update with your MySQL root password
+    private static final String DB_PASSWORD = "1234"; // Update to match your MySQL credentials
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
 
-    /**
-     * Establishes a connection to the database
-     * @return Connection object
-     * @throws SQLException if database access error occurs
-     * @throws ClassNotFoundException if JDBC driver not found
-     */
     public Connection getConnection() throws SQLException, ClassNotFoundException {
-        // Load the JDBC driver
         Class.forName(DB_DRIVER);
-        
-        // Create and return the connection
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
-    /**
-     * Retrieves all students from the database
-     * @return List of Student objects
-     */
+    private Student mapStudent(ResultSet rs) throws SQLException {
+        Student student = new Student();
+        student.setId(rs.getInt("id"));
+        student.setStudentCode(rs.getString("student_code"));
+        student.setFullName(rs.getString("full_name"));
+        student.setEmail(rs.getString("email"));
+        student.setMajor(rs.getString("major"));
+        student.setCreatedAt(rs.getTimestamp("created_at"));
+        return student;
+    }
+
     public List<Student> getAllStudents() {
         List<Student> students = new ArrayList<>();
         String query = "SELECT * FROM students ORDER BY id";
 
-        // Use try-with-resources for automatic resource management
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
-            // Iterate through the result set and create Student objects
             while (rs.next()) {
-                Student student = new Student();
-                student.setId(rs.getInt("id"));
-                student.setStudentCode(rs.getString("student_code"));
-                student.setFullName(rs.getString("full_name"));
-                student.setEmail(rs.getString("email"));
-                student.setMajor(rs.getString("major"));
-                
-                students.add(student);
+                students.add(mapStudent(rs));
             }
 
         } catch (ClassNotFoundException e) {
@@ -68,11 +57,6 @@ public class StudentDAO {
         return students;
     }
 
-    /**
-     * Retrieves a student by ID
-     * @param id Student ID
-     * @return Student object or null if not found
-     */
     public Student getStudentById(int id) {
         Student student = null;
         String query = "SELECT * FROM students WHERE id = ?";
@@ -81,15 +65,10 @@ public class StudentDAO {
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                student = new Student();
-                student.setId(rs.getInt("id"));
-                student.setStudentCode(rs.getString("student_code"));
-                student.setFullName(rs.getString("full_name"));
-                student.setEmail(rs.getString("email"));
-                student.setMajor(rs.getString("major"));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    student = mapStudent(rs);
+                }
             }
 
         } catch (ClassNotFoundException e) {
@@ -103,13 +82,8 @@ public class StudentDAO {
         return student;
     }
 
-    /**
-     * Adds a new student to the database
-     * @param student Student object to add
-     * @return true if successful, false otherwise
-     */
     public boolean addStudent(Student student) {
-        String query = "INSERT INTO students (student_code, full_name, email, major) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO students (student_code, full_name, email, major, created_at) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -118,9 +92,12 @@ public class StudentDAO {
             pstmt.setString(2, student.getFullName());
             pstmt.setString(3, student.getEmail());
             pstmt.setString(4, student.getMajor());
+            Timestamp created = student.getCreatedAt() != null
+                    ? student.getCreatedAt()
+                    : new Timestamp(System.currentTimeMillis());
+            pstmt.setTimestamp(5, created);
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (ClassNotFoundException e) {
             System.err.println("JDBC Driver not found: " + e.getMessage());
@@ -133,11 +110,6 @@ public class StudentDAO {
         }
     }
 
-    /**
-     * Updates an existing student in the database
-     * @param student Student object with updated information
-     * @return true if successful, false otherwise
-     */
     public boolean updateStudent(Student student) {
         String query = "UPDATE students SET student_code = ?, full_name = ?, email = ?, major = ? WHERE id = ?";
 
@@ -150,8 +122,7 @@ public class StudentDAO {
             pstmt.setString(4, student.getMajor());
             pstmt.setInt(5, student.getId());
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (ClassNotFoundException e) {
             System.err.println("JDBC Driver not found: " + e.getMessage());
@@ -164,11 +135,6 @@ public class StudentDAO {
         }
     }
 
-    /**
-     * Deletes a student from the database
-     * @param id Student ID to delete
-     * @return true if successful, false otherwise
-     */
     public boolean deleteStudent(int id) {
         String query = "DELETE FROM students WHERE id = ?";
 
@@ -177,8 +143,7 @@ public class StudentDAO {
 
             pstmt.setInt(1, id);
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (ClassNotFoundException e) {
             System.err.println("JDBC Driver not found: " + e.getMessage());
@@ -191,46 +156,28 @@ public class StudentDAO {
         }
     }
 
-    /**
-     * Searches students by keyword across student_code, full_name, and email.
-     * Results are ordered by id in descending order.
-     *
-     * @param keyword search keyword
-     * @return List of matching Student objects
-     */
     public List<Student> searchStudents(String keyword) {
         List<Student> students = new ArrayList<>();
 
-        // If keyword is null or empty, simply return all students
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllStudents();
         }
 
         String searchPattern = "%" + keyword.trim() + "%";
-        String query = "SELECT * FROM students " +
-                       "WHERE student_code LIKE ? " +
-                       "OR full_name LIKE ? " +
-                       "OR email LIKE ? " +
-                       "ORDER BY id DESC";
+        String query = "SELECT * FROM students "
+                + "WHERE student_code LIKE ? OR full_name LIKE ? OR email LIKE ? "
+                + "ORDER BY id DESC";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            // Set the same pattern for all three searchable columns
             pstmt.setString(1, searchPattern);
             pstmt.setString(2, searchPattern);
             pstmt.setString(3, searchPattern);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Student student = new Student();
-                    student.setId(rs.getInt("id"));
-                    student.setStudentCode(rs.getString("student_code"));
-                    student.setFullName(rs.getString("full_name"));
-                    student.setEmail(rs.getString("email"));
-                    student.setMajor(rs.getString("major"));
-
-                    students.add(student);
+                    students.add(mapStudent(rs));
                 }
             }
 
@@ -245,12 +192,10 @@ public class StudentDAO {
         return students;
     }
 
-    // Validate sortBy parameter against allowed column names
     private String validateSortBy(String sortBy) {
         if (sortBy == null) {
             return "id";
         }
-
         switch (sortBy) {
             case "id":
             case "student_code":
@@ -263,7 +208,6 @@ public class StudentDAO {
         }
     }
 
-    // Validate order parameter ("asc" or "desc")
     private String validateOrder(String order) {
         if (order != null && "desc".equalsIgnoreCase(order)) {
             return "DESC";
@@ -271,13 +215,6 @@ public class StudentDAO {
         return "ASC";
     }
 
-    /**
-     * Retrieves students sorted by a specific column and order.
-     *
-     * @param sortBy column name to sort by
-     * @param order  sort direction ("asc" or "desc")
-     * @return List of sorted students
-     */
     public List<Student> getStudentsSorted(String sortBy, String order) {
         List<Student> students = new ArrayList<>();
 
@@ -291,14 +228,7 @@ public class StudentDAO {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                Student student = new Student();
-                student.setId(rs.getInt("id"));
-                student.setStudentCode(rs.getString("student_code"));
-                student.setFullName(rs.getString("full_name"));
-                student.setEmail(rs.getString("email"));
-                student.setMajor(rs.getString("major"));
-
-                students.add(student);
+                students.add(mapStudent(rs));
             }
 
         } catch (ClassNotFoundException e) {
@@ -312,12 +242,6 @@ public class StudentDAO {
         return students;
     }
 
-    /**
-     * Retrieves students by a specific major.
-     *
-     * @param major the major to filter by
-     * @return List of students with the given major
-     */
     public List<Student> getStudentsByMajor(String major) {
         List<Student> students = new ArrayList<>();
 
@@ -330,14 +254,7 @@ public class StudentDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Student student = new Student();
-                    student.setId(rs.getInt("id"));
-                    student.setStudentCode(rs.getString("student_code"));
-                    student.setFullName(rs.getString("full_name"));
-                    student.setEmail(rs.getString("email"));
-                    student.setMajor(rs.getString("major"));
-
-                    students.add(student);
+                    students.add(mapStudent(rs));
                 }
             }
 

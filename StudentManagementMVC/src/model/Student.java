@@ -1,19 +1,22 @@
 package model;
 
+import java.sql.Timestamp;
+
 public class Student {
 
-    // Private attributes
     private int id;
     private String studentCode;
     private String fullName;
     private String email;
     private String major;
+    private Timestamp createdAt;
 
-    // No-arg constructor
     public Student() {
     }
 
-    // Parameterized constructor (for insert)
+    /**
+     * Parameterized constructor for create/update payloads (no database id).
+     */
     public Student(String studentCode, String fullName, String email, String major) {
         this.studentCode = studentCode;
         this.fullName = fullName;
@@ -21,16 +24,6 @@ public class Student {
         this.major = major;
     }
 
-    // Full parameterized constructor (for update)
-    public Student(int id, String studentCode, String fullName, String email, String major) {
-        this.id = id;
-        this.studentCode = studentCode;
-        this.fullName = fullName;
-        this.email = email;
-        this.major = major;
-    }
-
-    // Getters and Setters
     public int getId() {
         return id;
     }
@@ -71,15 +64,23 @@ public class Student {
         this.major = major;
     }
 
-    // Override toString()
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
     @Override
     public String toString() {
-        return "Student{" +
-                "id=" + id +
-                ", studentCode='" + studentCode + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", email='" + email + '\'' +
-                ", major='" + major + '\'' +
-                '}';
+        return "Student{"
+                + "id=" + id
+                + ", studentCode='" + studentCode + '\''
+                + ", fullName='" + fullName + '\''
+                + ", email='" + email + '\''
+                + ", major='" + major + '\''
+                + ", createdAt=" + createdAt
+                + '}';
     }
 }

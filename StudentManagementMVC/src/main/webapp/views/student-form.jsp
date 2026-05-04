@@ -102,12 +102,24 @@
             
             <div class="form-group">
                 <label for="studentCode">Student Code <span class="required">*</span></label>
-                <input type="text" 
-                       id="studentCode" 
-                       name="studentCode" 
-                       value="${student.studentCode}" 
-                       required 
-                       placeholder="Enter student code">
+                <c:choose>
+                    <c:when test="${not empty student}">
+                        <input type="text"
+                               id="studentCode"
+                               name="studentCode"
+                               value="${student.studentCode}"
+                               readonly="readonly"
+                               placeholder="Student code">
+                    </c:when>
+                    <c:otherwise>
+                        <input type="text"
+                               id="studentCode"
+                               name="studentCode"
+                               value="${student.studentCode}"
+                               required="required"
+                               placeholder="e.g. SV001">
+                    </c:otherwise>
+                </c:choose>
                 <c:if test="${not empty errorCode}">
                     <span class="error">${errorCode}</span>
                 </c:if>
@@ -127,13 +139,12 @@
             </div>
             
             <div class="form-group">
-                <label for="email">Email <span class="required">*</span></label>
-                <input type="email" 
-                       id="email" 
-                       name="email" 
-                       value="${student.email}" 
-                       required 
-                       placeholder="Enter email address">
+                <label for="email">Email <span style="font-weight: normal; color: #666;">(optional)</span></label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       value="${student.email}"
+                       placeholder="Enter email address if any">
                 <c:if test="${not empty errorEmail}">
                     <span class="error">${errorEmail}</span>
                 </c:if>

@@ -127,11 +127,15 @@ public class StudentController extends HttpServlet {
 
         String major = request.getParameter("major");
 
-        List<Student> students = studentDAO.getStudentsByMajor(major);
+        List<Student> students;
+        if (major == null || major.trim().isEmpty()) {
+            students = studentDAO.getAllStudents();
+        } else {
+            students = studentDAO.getStudentsByMajor(major.trim());
+        }
 
         request.setAttribute("students", students);
         request.setAttribute("major", major);
-        // For view convenience, also expose as selectedMajor
         request.setAttribute("selectedMajor", major);
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-list.jsp");
@@ -150,13 +154,25 @@ public class StudentController extends HttpServlet {
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
 
-        int id = Integer.parseInt(request.getParameter("id"));
-        Student existingStudent = studentDAO.getStudentById(id);
+        String idParam = request.getParameter("id");
+        if (idParam == null || idParam.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Invalid student id");
+            return;
+        }
 
-        request.setAttribute("student", existingStudent);
-
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
-        dispatcher.forward(request, response);
+        try {
+            int id = Integer.parseInt(idParam.trim());
+            Student existingStudent = studentDAO.getStudentById(id);
+            if (existingStudent == null) {
+                response.sendRedirect(request.getContextPath() + "/student?action=list&error=Student not found");
+                return;
+            }
+            request.setAttribute("student", existingStudent);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/views/student-form.jsp");
+            dispatcher.forward(request, response);
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Invalid student id");
+        }
     }
 
     // Insert new student
@@ -180,9 +196,9 @@ public class StudentController extends HttpServlet {
         }
 
         if (studentDAO.addStudent(student)) {
-            response.sendRedirect("student?action=list&message=Student added successfully");
+            response.sendRedirect(request.getContextPath() + "/student?action=list&message=Student added successfully");
         } else {
-            response.sendRedirect("student?action=list&error=Failed to add student");
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Failed to add student");
         }
     }
 
@@ -209,9 +225,9 @@ public class StudentController extends HttpServlet {
         }
 
         if (studentDAO.updateStudent(student)) {
-            response.sendRedirect("student?action=list&message=Student updated successfully");
+            response.sendRedirect(request.getContextPath() + "/student?action=list&message=Student updated successfully");
         } else {
-            response.sendRedirect("student?action=list&error=Failed to update student");
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Failed to update student");
         }
     }
 
@@ -219,12 +235,21 @@ public class StudentController extends HttpServlet {
     private void deleteStudent(HttpServletRequest request, HttpServletResponse response) 
             throws IOException {
 
-        int id = Integer.parseInt(request.getParameter("id"));
+        String idParam = request.getParameter("id");
+        if (idParam == null || idParam.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Invalid student id");
+            return;
+        }
 
-        if (studentDAO.deleteStudent(id)) {
-            response.sendRedirect("student?action=list&message=Student deleted successfully");
-        } else {
-            response.sendRedirect("student?action=list&error=Failed to delete student");
+        try {
+            int id = Integer.parseInt(idParam.trim());
+            if (studentDAO.deleteStudent(id)) {
+                response.sendRedirect(request.getContextPath() + "/student?action=list&message=Student deleted successfully");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/student?action=list&error=Failed to delete student");
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/student?action=list&error=Invalid student id");
         }
     }
 
